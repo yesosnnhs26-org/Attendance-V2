@@ -98,39 +98,32 @@ const SCAN_DELAY = 2000;
 
 async function sendAttendance(officerID){
 
-    try{
+    const formData = new URLSearchParams();
 
-        const response = await fetch(SCRIPT_URL,{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                officerID:officerID
-            })
-        });
+    formData.append("officerID", officerID);
 
-        const data = await response.json();
+    const response = await fetch(SCRIPT_URL,{
+        method:"POST",
+        body:formData
+    });
 
-        if(data.success){
+    const data = await response.json();
 
-            status.textContent = "✔ Attendance Recorded";
-            status.style.color = "#22c55e";
+    if(data.success){
 
-            result.textContent = data.name;
+        status.textContent = "✔ Attendance Recorded";
+        status.style.color = "#22c55e";
+        result.textContent = data.name;
 
-        }else{
+    }else{
 
-            status.textContent = "❌ " + data.message;
-            status.style.color = "#ef4444";
+        status.textContent = "❌ " + data.message;
+        status.style.color = "#ef4444";
+        result.textContent = "---";
 
-            if(data.name){
-                result.textContent = data.name;
-            }else{
-                result.textContent = "---";
-            }
+    }
 
-        }
+}
 
     }catch(error){
 
