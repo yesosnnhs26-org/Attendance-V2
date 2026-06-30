@@ -1,83 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>YES-O Barcode Scanner</title>
-
-<script src="https://unpkg.com/@zxing/library@latest"></script>
-
-<style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-    background:#111827;
-    font-family:Arial,Helvetica,sans-serif;
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
-
-.container{
-    width:420px;
-    text-align:center;
-}
-
-h1{
-    margin-bottom:20px;
-}
-
-video{
-    width:100%;
-    border-radius:15px;
-    border:3px solid #16a34a;
-}
-
-#status{
-    margin-top:20px;
-    font-size:18px;
-    color:#9ca3af;
-    transition:.3s;
-}
-
-#result{
-    margin-top:10px;
-    font-size:30px;
-    font-weight:bold;
-    color:#22c55e;
-    transition:.3s;
-}
-
-.success{
-    transform:scale(1.12);
-}
-
-</style>
-
-</head>
-<body>
-
-<div class="container">
-
-<h1>YES-O Attendance Scanner</h1>
-
-<video id="video"></video>
-
-<div id="status">Ready to Scan...</div>
-
-<div id="result">---</div>
-
-</div>
-
 <script>
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAEUN6C1X2mXiHQ10fI51-ZODVA4tRC1OAhPEZglghLebuuCXC-q5WXA99Flr68IjMcQ/exec";
 
 const codeReader = new ZXing.BrowserBarcodeReader();
 
@@ -86,8 +9,58 @@ const result = document.getElementById("result");
 const status = document.getElementById("status");
 
 let scanning = true;
-
 const SCAN_DELAY = 2000;
+
+async function sendAttendance(officerID){
+
+    try{
+
+        const response = await fetch(SCRIPT_URL,{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+                officerID: officerID
+            })
+
+        });
+
+        const data = await response.json();
+
+        if(data.success){
+
+            status.textContent = "✔ " + data.message;
+            status.style.color = "#22c55e";
+
+            result.textContent = data.name;
+
+        }else{
+
+            status.textContent = "❌ " + data.message;
+            status.style.color = "#ef4444";
+
+            if(data.name){
+                result.textContent = data.name;
+            }else{
+                result.textContent = "---";
+            }
+
+        }
+
+    }catch(err){
+
+        console.error(err);
+
+        status.textContent = "❌ Connection Error";
+        status.style.color = "#ef4444";
+
+    }
+
+}
 
 async function startScanner(){
 
@@ -98,7 +71,7 @@ async function startScanner(){
     codeReader.decodeFromVideoDevice(
         selectedDevice,
         video,
-        (barcode, err)=>{
+        async(barcode, err)=>{
 
             if(barcode && scanning){
 
@@ -108,18 +81,11 @@ async function startScanner(){
 
                 result.classList.add("success");
 
-                status.textContent = "✔ Attendance Recorded";
-                status.style.color = "#22c55e";
+                new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play();
 
                 console.log(barcode.text);
 
-                // Success sound
-                new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play();
-
-                // ===========================
-                // GOOGLE SHEETS GOES HERE
-                // sendAttendance(barcode.text);
-                // ===========================
+                await sendAttendance(barcode.text);
 
                 setTimeout(()=>{
 
@@ -145,6 +111,3 @@ async function startScanner(){
 startScanner();
 
 </script>
-
-</body>
-</html>
