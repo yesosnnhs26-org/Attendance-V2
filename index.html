@@ -98,32 +98,41 @@ const SCAN_DELAY = 2000;
 
 async function sendAttendance(officerID){
 
-    const formData = new URLSearchParams();
+    try{
 
-    formData.append("officerID", officerID);
+        const formData = new URLSearchParams();
 
-    const response = await fetch(SCRIPT_URL,{
-        method:"POST",
-        body:formData
-    });
+        formData.append("officerID", officerID);
 
-    const data = await response.json();
+        const response = await fetch(SCRIPT_URL,{
 
-    if(data.success){
+            method:"POST",
 
-        status.textContent = "✔ Attendance Recorded";
-        status.style.color = "#22c55e";
-        result.textContent = data.name;
+            body:formData
 
-    }else{
+        });
 
-        status.textContent = "❌ " + data.message;
-        status.style.color = "#ef4444";
-        result.textContent = "---";
+        const data = await response.json();
 
-    }
+        if(data.success){
 
-}
+            status.textContent = "✔ Attendance Recorded";
+            status.style.color = "#22c55e";
+
+            result.textContent = data.name;
+
+        }else{
+
+            status.textContent = "❌ " + data.message;
+            status.style.color = "#ef4444";
+
+            if(data.name){
+                result.textContent = data.name;
+            }else{
+                result.textContent = "---";
+            }
+
+        }
 
     }catch(error){
 
@@ -135,7 +144,6 @@ async function sendAttendance(officerID){
     }
 
 }
-
 async function startScanner(){
 
     const devices = await codeReader.listVideoInputDevices();
