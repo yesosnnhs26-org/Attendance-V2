@@ -62,31 +62,29 @@ video{
 }
 
 </style>
-
 </head>
 
 <body>
 
 <div class="container">
 
-<h1>YES-O Attendance Scanner</h1>
+    <h1>YES-O Attendance Scanner</h1>
 
-<video id="video"></video>
+    <video id="video"></video>
 
-<div id="status">
-Ready to Scan...
-</div>
+    <div id="status">
+        Ready to Scan...
+    </div>
 
-<div id="result">
----
-</div>
+    <div id="result">
+        ---
+    </div>
 
 </div>
 
 <script>
 
-const SCRIPT_URL =
-"https://yeso-attendance-api.yesosnnhs26.workers.dev/";
+const SCRIPT_URL = "https://yeso-attendance-api.yesosnnhs26.workers.dev/";
 
 const codeReader = new ZXing.BrowserBarcodeReader();
 
@@ -102,34 +100,30 @@ async function sendAttendance(officerID){
     try{
 
         const response = await fetch(SCRIPT_URL,{
-
             method:"POST",
-
             headers:{
                 "Content-Type":"application/json"
             },
-
             body:JSON.stringify({
-                officerID
+                officerID: officerID
             })
-
         });
 
         const data = await response.json();
 
         if(data.success){
 
-            status.textContent="✔ Attendance Recorded";
-            status.style.color="#22c55e";
+            status.textContent = "✔ Attendance Recorded";
+            status.style.color = "#22c55e";
 
-            result.textContent=data.name;
+            result.textContent = data.name;
 
         }else{
 
-            status.textContent="❌ "+data.message;
-            status.style.color="#ef4444";
+            status.textContent = "❌ " + data.message;
+            status.style.color = "#ef4444";
 
-            result.textContent=data.name || "---";
+            result.textContent = data.name || "---";
 
         }
 
@@ -137,18 +131,13 @@ async function sendAttendance(officerID){
 
         console.error(error);
 
-        status.textContent="❌ Connection Error";
-        status.style.color="#ef4444";
+        status.textContent = "❌ Connection Error";
+        status.style.color = "#ef4444";
 
     }
 
 }
 
-    }
-
-}
-
-}
 async function startScanner(){
 
     const devices = await codeReader.listVideoInputDevices();
@@ -169,13 +158,11 @@ async function startScanner(){
 
         video,
 
-        async(resultData,err)=>{
+        async(resultData, err)=>{
 
             if(resultData && scanning){
 
                 scanning = false;
-
-                result.textContent = resultData.text;
 
                 result.classList.add("success");
 
@@ -187,16 +174,15 @@ async function startScanner(){
 
                 setTimeout(()=>{
 
-                    result.textContent="---";
-
+                    result.textContent = "---";
                     result.classList.remove("success");
 
-                    status.textContent="Ready to Scan...";
-                    status.style.color="#9ca3af";
+                    status.textContent = "Ready to Scan...";
+                    status.style.color = "#9ca3af";
 
-                    scanning=true;
+                    scanning = true;
 
-                },SCAN_DELAY);
+                }, SCAN_DELAY);
 
             }
 
