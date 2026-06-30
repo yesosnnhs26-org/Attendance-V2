@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>YES-O Barcode Scanner</title>
+
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<style>
+body{
+    margin:0;
+    background:#111827;
+    color:white;
+    font-family:Arial,sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    width:420px;
+    text-align:center;
+}
+
+video{
+    width:100%;
+    border-radius:15px;
+    border:3px solid #16a34a;
+}
+
+h1{
+    margin-bottom:20px;
+}
+
+#status{
+    margin-top:20px;
+    font-size:18px;
+    color:#9ca3af;
+}
+
+#result{
+    margin-top:10px;
+    font-size:28px;
+    font-weight:bold;
+    color:#22c55e;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>YES-O Barcode Scanner</h1>
+
+<video id="video"></video>
+
+<div id="status">Ready to Scan...</div>
+
+<div id="result">---</div>
+
+</div>
+
+<script>
+
+const codeReader = new ZXing.BrowserBarcodeReader();
+const video = document.getElementById("video");
+const result = document.getElementById("result");
+
+async function startScanner(){
+
+    const devices = await codeReader.listVideoInputDevices();
+
+    codeReader.decodeFromVideoDevice(
+        devices[0].deviceId,
+        video,
+        (barcode, err)=>{
+
+            if(barcode){
+
+                result.textContent = barcode.text;
+
+                console.log(barcode.text);
+
+                // Stop duplicate scans for 2 seconds
+                codeReader.reset();
+
+                setTimeout(startScanner,2000);
+
+            }
+
+        }
+    );
+
+}
+
+startScanner();
+
+</script>
+
+</body>
+</html>
