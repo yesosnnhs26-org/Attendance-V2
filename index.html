@@ -1,3 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>YES-O Attendance Scanner</title>
+
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+    background:#111827;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.container{
+    width:420px;
+    text-align:center;
+}
+
+h1{
+    margin-bottom:20px;
+}
+
+video{
+    width:100%;
+    border-radius:15px;
+    border:3px solid #16a34a;
+    background:black;
+}
+
+#status{
+    margin-top:20px;
+    font-size:18px;
+    color:#9ca3af;
+    transition:.3s;
+}
+
+#result{
+    margin-top:12px;
+    font-size:28px;
+    font-weight:bold;
+    color:#22c55e;
+    transition:.3s;
+}
+
+.success{
+    transform:scale(1.08);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>YES-O Attendance Scanner</h1>
+
+<video id="video"></video>
+
+<div id="status">
+Ready to Scan...
+</div>
+
+<div id="result">
+---
+</div>
+
+</div>
+
 <script>
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAEUN6C1X2mXiHQ10fI51-ZODVA4tRC1OAhPEZglghLebuuCXC-q5WXA99Flr68IjMcQ/exec";
@@ -16,24 +101,20 @@ async function sendAttendance(officerID){
     try{
 
         const response = await fetch(SCRIPT_URL,{
-
             method:"POST",
-
             headers:{
                 "Content-Type":"application/json"
             },
-
             body:JSON.stringify({
-                officerID: officerID
+                officerID:officerID
             })
-
         });
 
         const data = await response.json();
 
         if(data.success){
 
-            status.textContent = "✔ " + data.message;
+            status.textContent = "✔ Attendance Recorded";
             status.style.color = "#22c55e";
 
             result.textContent = data.name;
@@ -51,9 +132,9 @@ async function sendAttendance(officerID){
 
         }
 
-    }catch(err){
+    }catch(error){
 
-        console.error(err);
+        console.error(error);
 
         status.textContent = "❌ Connection Error";
         status.style.color = "#ef4444";
@@ -66,26 +147,37 @@ async function startScanner(){
 
     const devices = await codeReader.listVideoInputDevices();
 
+    if(devices.length === 0){
+
+        status.textContent = "No camera found.";
+        status.style.color = "#ef4444";
+        return;
+
+    }
+
     const selectedDevice = devices[0].deviceId;
 
     codeReader.decodeFromVideoDevice(
-        selectedDevice,
-        video,
-        async(barcode, err)=>{
 
-            if(barcode && scanning){
+        selectedDevice,
+
+        video,
+
+        async(resultData,err)=>{
+
+            if(resultData && scanning){
 
                 scanning = false;
 
-                result.textContent = barcode.text;
+                result.textContent = resultData.text;
 
                 result.classList.add("success");
 
                 new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play();
 
-                console.log(barcode.text);
+                console.log(resultData.text);
 
-                await sendAttendance(barcode.text);
+                await sendAttendance(resultData.text);
 
                 setTimeout(()=>{
 
@@ -111,3 +203,6 @@ async function startScanner(){
 startScanner();
 
 </script>
+
+</body>
+</html>
