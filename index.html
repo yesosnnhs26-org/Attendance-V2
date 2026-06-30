@@ -100,17 +100,9 @@ async function sendAttendance(officerID){
 
     try{
 
-        const formData = new URLSearchParams();
-
-        formData.append("officerID", officerID);
-
-        const response = await fetch(SCRIPT_URL,{
-
-            method:"POST",
-
-            body:formData
-
-        });
+        const response = await fetch(
+            `${SCRIPT_URL}?officerID=${encodeURIComponent(officerID)}`
+        );
 
         const data = await response.json();
 
@@ -118,19 +110,13 @@ async function sendAttendance(officerID){
 
             status.textContent = "✔ Attendance Recorded";
             status.style.color = "#22c55e";
-
             result.textContent = data.name;
 
         }else{
 
             status.textContent = "❌ " + data.message;
             status.style.color = "#ef4444";
-
-            if(data.name){
-                result.textContent = data.name;
-            }else{
-                result.textContent = "---";
-            }
+            result.textContent = data.name || "---";
 
         }
 
@@ -142,6 +128,8 @@ async function sendAttendance(officerID){
         status.style.color = "#ef4444";
 
     }
+
+}
 
 }
 async function startScanner(){
