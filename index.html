@@ -9,11 +9,17 @@
 <script src="https://unpkg.com/@zxing/library@latest"></script>
 
 <style>
-body{
+
+*{
     margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
     background:#111827;
+    font-family:Arial,Helvetica,sans-serif;
     color:white;
-    font-family:Arial,sans-serif;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -25,36 +31,43 @@ body{
     text-align:center;
 }
 
+h1{
+    margin-bottom:20px;
+}
+
 video{
     width:100%;
     border-radius:15px;
     border:3px solid #16a34a;
 }
 
-h1{
-    margin-bottom:20px;
-}
-
 #status{
     margin-top:20px;
     font-size:18px;
     color:#9ca3af;
+    transition:.3s;
 }
 
 #result{
     margin-top:10px;
-    font-size:28px;
+    font-size:30px;
     font-weight:bold;
     color:#22c55e;
+    transition:.3s;
 }
-</style>
-</head>
 
+.success{
+    transform:scale(1.12);
+}
+
+</style>
+
+</head>
 <body>
 
 <div class="container">
 
-<h1>YES-O Barcode Scanner</h1>
+<h1>YES-O Attendance Scanner</h1>
 
 <video id="video"></video>
 
@@ -67,32 +80,64 @@ h1{
 <script>
 
 const codeReader = new ZXing.BrowserBarcodeReader();
+
 const video = document.getElementById("video");
 const result = document.getElementById("result");
+const status = document.getElementById("status");
+
+let scanning = true;
+
+const SCAN_DELAY = 2000;
 
 async function startScanner(){
 
     const devices = await codeReader.listVideoInputDevices();
 
+    const selectedDevice = devices[0].deviceId;
+
     codeReader.decodeFromVideoDevice(
-        devices[0].deviceId,
+        selectedDevice,
         video,
         (barcode, err)=>{
 
-            if(barcode){
+            if(barcode && scanning){
+
+                scanning = false;
 
                 result.textContent = barcode.text;
 
+                result.classList.add("success");
+
+                status.textContent = "✔ Attendance Recorded";
+                status.style.color = "#22c55e";
+
                 console.log(barcode.text);
 
-                // Stop duplicate scans for 2 seconds
-                codeReader.reset();
+                // Success sound
+                new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play();
 
-                setTimeout(startScanner,2000);
+                // ===========================
+                // GOOGLE SHEETS GOES HERE
+                // sendAttendance(barcode.text);
+                // ===========================
+
+                setTimeout(()=>{
+
+                    result.textContent="---";
+
+                    result.classList.remove("success");
+
+                    status.textContent="Ready to Scan...";
+                    status.style.color="#9ca3af";
+
+                    scanning=true;
+
+                },SCAN_DELAY);
 
             }
 
         }
+
     );
 
 }
