@@ -85,7 +85,8 @@ Ready to Scan...
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAEUN6C1X2mXiHQ10fI51-ZODVA4tRC1OAhPEZglghLebuuCXC-q5WXA99Flr68IjMcQ/exec";
+const SCRIPT_URL =
+"https://yeso-attendance-api.yesosnnhs26.workers.dev/";
 
 const codeReader = new ZXing.BrowserBarcodeReader();
 
@@ -100,23 +101,35 @@ async function sendAttendance(officerID){
 
     try{
 
-        const response = await fetch(
-            `${SCRIPT_URL}?officerID=${encodeURIComponent(officerID)}`
-        );
+        const response = await fetch(SCRIPT_URL,{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+                officerID
+            })
+
+        });
 
         const data = await response.json();
 
         if(data.success){
 
-            status.textContent = "✔ Attendance Recorded";
-            status.style.color = "#22c55e";
-            result.textContent = data.name;
+            status.textContent="✔ Attendance Recorded";
+            status.style.color="#22c55e";
+
+            result.textContent=data.name;
 
         }else{
 
-            status.textContent = "❌ " + data.message;
-            status.style.color = "#ef4444";
-            result.textContent = data.name || "---";
+            status.textContent="❌ "+data.message;
+            status.style.color="#ef4444";
+
+            result.textContent=data.name || "---";
 
         }
 
@@ -124,8 +137,12 @@ async function sendAttendance(officerID){
 
         console.error(error);
 
-        status.textContent = "❌ Connection Error";
-        status.style.color = "#ef4444";
+        status.textContent="❌ Connection Error";
+        status.style.color="#ef4444";
+
+    }
+
+}
 
     }
 
