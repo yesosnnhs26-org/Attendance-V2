@@ -3,136 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>YES-O Attendance Scanner</title>
-
 <script src="https://unpkg.com/@zxing/library@latest"></script>
-
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,Helvetica,sans-serif;
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#111827;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.container{width:420px;text-align:center;padding:20px}
+h1{margin-bottom:20px}
+select{
+width:100%;
+padding:12px;
+margin-bottom:15px;
+border:none;
+border-radius:10px;
+background:#1f2937;
+color:#fff;
+font-size:16px;
 }
-
-body{
-    background:#111827;
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-}
-
-.container{
-    width:420px;
-    text-align:center;
-}
-
-h1{
-    margin-bottom:20px;
-}
-
 video{
-    width:100%;
-    border-radius:15px;
-    border:3px solid #16a34a;
-    background:black;
+width:100%;
+border-radius:15px;
+border:3px solid #16a34a;
+background:#000;
 }
-
 #status{
-    margin-top:20px;
-    font-size:18px;
-    color:#9ca3af;
-    transition:.3s;
+margin-top:20px;
+font-size:18px;
+color:#9ca3af;
 }
-
 #result{
-    margin-top:12px;
-    font-size:28px;
-    font-weight:bold;
-    color:#22c55e;
-    transition:.3s;
+margin-top:12px;
+font-size:28px;
+font-weight:bold;
+color:#22c55e;
 }
-
-.success{
-    transform:scale(1.08);
-}
-
+.success{transform:scale(1.05)}
 </style>
 </head>
-
 <body>
 
 <div class="container">
+<h1>YES-O Attendance Scanner</h1>
 
-    <h1>YES-O Attendance Scanner</h1>
+<select id="cameraSelect"></select>
 
-    <video id="video"></video>
+<video id="video"></video>
 
-    <div id="status">
-        Ready to Scan...
-    </div>
+<div id="status">Ready to Scan...</div>
 
-    <div id="result">
-        ---
-    </div>
-
+<div id="result">---</div>
 </div>
 
 <script>
 
-const SCRIPT_URL = "https://yeso-attendance-api.yesosnnhs26.workers.dev/";
+const SCRIPT_URL="https://yeso-attendance-api.yesosnnhs26.workers.dev/";
 
-const codeReader = new ZXing.BrowserBarcodeReader();
+const codeReader=new ZXing.BrowserBarcodeReader();
 
-const video = document.getElementById("video");
-const result = document.getElementById("result");
-const status = document.getElementById("status");
+const video=document.getElementById("video");
+const result=document.getElementById("result");
+const status=document.getElementById("status");
+const cameraSelect=document.getElementById("cameraSelect");
 
-let scanning = true;
-const SCAN_DELAY = 2000;
+let scanning=true;
+const SCAN_DELAY=2000;
 
 async function sendAttendance(officerID){
 
     try{
 
-        const response = await fetch(SCRIPT_URL,{
+        const response=await fetch(SCRIPT_URL,{
             method:"POST",
             headers:{
                 "Content-Type":"application/json"
             },
             body:JSON.stringify({
-                officerID: officerID
+                officerID
             })
         });
 
-        const data = await response.json();
+        const data=await response.json();
 
         if(data.success){
 
-            status.textContent = "✔ Attendance Recorded";
-            status.style.color = "#22c55e";
+            status.textContent="✔ Attendance Recorded";
+            status.style.color="#22c55e";
 
-            result.textContent = data.name;
+            result.innerHTML=`
+            ${data.name}<br>
+            <small style="font-size:18px">${data.officerID}</small>
+            `;
 
         }else{
 
-            status.textContent = "❌ " + data.message;
-            status.style.color = "#ef4444";
+            status.textContent="❌ "+data.message;
+            status.style.color="#ef4444";
 
-            result.textContent = data.name || "---";
+            result.innerHTML=`
+            ${data.name || "---"}<br>
+            <small style="font-size:18px">${data.officerID || ""}</small>
+            `;
 
         }
 
-    }catch(error){
+    }catch(err){
 
-        console.error(error);
+        console.error(err);
 
-        status.textContent = "❌ Connection Error";
-        status.style.color = "#ef4444";
+        status.textContent="❌ Connection Error";
+        status.style.color="#ef4444";
 
     }
 
@@ -140,69 +119,79 @@ async function sendAttendance(officerID){
 
 async function startScanner(){
 
-        let selectedDevice = null;
+    const devices=await codeReader.listVideoInputDevices();
 
-const devices = await codeReader.listVideoInputDevices();
+    if(devices.length===0){
 
-if (devices.length === 0) {
+        status.textContent="No camera found.";
+        status.style.color="#ef4444";
+        return;
 
-    status.textContent = "No camera found.";
-    status.style.color = "#ef4444";
-    return;
+    }
 
-}
+    cameraSelect.innerHTML="";
 
-// Try to find the back camera
-selectedDevice = devices.find(device =>
-    device.label.toLowerCase().includes("back") ||
-    device.label.toLowerCase().includes("rear") ||
-    device.label.toLowerCase().includes("environment")
-);
+    devices.forEach((device,index)=>{
 
-if (selectedDevice) {
-    selectedDevice = selectedDevice.deviceId;
-} else {
-    // Fallback
-    selectedDevice = devices[devices.length - 1].deviceId;
-}
+        const option=document.createElement("option");
 
-    codeReader.decodeFromVideoDevice(
+        option.value=device.deviceId;
+        option.text=device.label || `Camera ${index+1}`;
 
-        selectedDevice,
+        cameraSelect.appendChild(option);
 
-        video,
+    });
 
-        async(resultData, err)=>{
+    const savedCamera=localStorage.getItem("yesoCamera");
+
+    if(savedCamera && [...cameraSelect.options].some(o=>o.value===savedCamera)){
+        cameraSelect.value=savedCamera;
+    }
+
+    async function startCamera(deviceId){
+
+        codeReader.reset();
+
+        codeReader.decodeFromVideoDevice(deviceId,video,async(resultData)=>{
 
             if(resultData && scanning){
 
-                scanning = false;
+                scanning=false;
 
                 result.classList.add("success");
 
-                new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play();
-
-                console.log(resultData.text);
+                try{
+                    new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play();
+                }catch(e){}
 
                 await sendAttendance(resultData.text);
 
                 setTimeout(()=>{
 
-                    result.textContent = "---";
                     result.classList.remove("success");
 
-                    status.textContent = "Ready to Scan...";
-                    status.style.color = "#9ca3af";
+                    status.textContent="Ready to Scan...";
+                    status.style.color="#9ca3af";
 
-                    scanning = true;
+                    scanning=true;
 
-                }, SCAN_DELAY);
+                },SCAN_DELAY);
 
             }
 
-        }
+        });
 
-    );
+    }
+
+    await startCamera(cameraSelect.value);
+
+    cameraSelect.onchange=async()=>{
+
+        localStorage.setItem("yesoCamera",cameraSelect.value);
+
+        await startCamera(cameraSelect.value);
+
+    };
 
 }
 
