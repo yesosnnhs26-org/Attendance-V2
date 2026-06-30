@@ -140,17 +140,31 @@ async function sendAttendance(officerID){
 
 async function startScanner(){
 
-    const devices = await codeReader.listVideoInputDevices();
+        let selectedDevice = null;
 
-    if(devices.length === 0){
+const devices = await codeReader.listVideoInputDevices();
 
-        status.textContent = "No camera found.";
-        status.style.color = "#ef4444";
-        return;
+if (devices.length === 0) {
 
-    }
+    status.textContent = "No camera found.";
+    status.style.color = "#ef4444";
+    return;
 
-    const selectedDevice = devices[0].deviceId;
+}
+
+// Try to find the back camera
+selectedDevice = devices.find(device =>
+    device.label.toLowerCase().includes("back") ||
+    device.label.toLowerCase().includes("rear") ||
+    device.label.toLowerCase().includes("environment")
+);
+
+if (selectedDevice) {
+    selectedDevice = selectedDevice.deviceId;
+} else {
+    // Fallback
+    selectedDevice = devices[devices.length - 1].deviceId;
+}
 
     codeReader.decodeFromVideoDevice(
 
